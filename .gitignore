@@ -1,0 +1,51 @@
+# ROS 2 / colcon build outputs
+build/
+install/
+log/
+
+# Runtime logs and recorded data
+*.log
+*.trace
+*.bag
+*.db3
+*.mcap
+*.sqlite3
+*.csv
+MUJOCO_LOG.TXT
+bags/
+csv_out/
+rosbag2_*/
+
+# hih_logging creates timestamped sessions here.
+/src/hih_logging/recordings/*
+!/src/hih_logging/recordings/.gitkeep
+
+# Python caches, test results, and package metadata
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# C/C++ and CMake-generated artifacts outside colcon build directories
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.o
+*.obj
+*.so
+*.a
+
+# Editor, OS, and temporary files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

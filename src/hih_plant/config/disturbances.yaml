@@ -1,0 +1,49 @@
+# Optional experiment nodes are started separately in their own terminals.
+# Existing cooperation_launch loads only the cooperation_plant section below.
+cooperation_plant:
+  ros__parameters:
+    enable_disturbance_inputs: true
+    disturbance_timeout_s: 0.3             # Wall-time watchdog for wrench/wind.
+    disturbance_telemetry_rate_hz: 50.0
+    wind_air_density_kg_m3: 1.225
+    # Area normal to payload Body X/Y/Z. Defaults in code follow the compiled
+    # payload box; these values match the current 0.40 x 0.50 x 0.50 m XML.
+    wind_payload_area_body_m2: [0.25, 0.20, 0.20]
+    wind_payload_drag_coefficient: [1.0, 1.0, 1.0]
+    wind_payload_pressure_center_body_m: [0.0, 0.0, 0.0]
+    # Provisional lumped drone values, not identified aerodynamic coefficients.
+    wind_leader_area_body_m2: [0.10, 0.10, 0.16]
+    wind_leader_drag_coefficient: [1.0, 1.0, 1.0]
+    wind_leader_pressure_center_body_m: [0.0, 0.0, 0.0]
+    wind_follower_area_body_m2: [0.10, 0.10, 0.16]
+    wind_follower_drag_coefficient: [1.0, 1.0, 1.0]
+    wind_follower_pressure_center_body_m: [0.0, 0.0, 0.0]
+
+payload_disturbance:
+  ros__parameters:
+    keyboard_enabled: true
+    publish_rate_hz: 50.0
+    clock_timeout_s: 0.5
+    # Full sides: 5 x 5 cm. Diagonal: 5*sqrt(2) cm. CCW seen from +Body Z.
+    # 1=(+x,+y) -> 2=(-x,+y) -> 3=(-x,-y) -> 4=(+x,-y) -> 1...
+    com_half_size_m: [0.025, 0.025]
+    com_speed_mps: 0.01
+    # Keys U I O J K L respectively. Forces [N], torques [N*m].
+    # Signed values are allowed; '-' also reverses the last selected axis.
+    wrench_amplitudes: [1.0, 1.0, 1.0, 0.05, 0.05, 0.05]
+    sine_frequency_hz: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    wrench_frame: world                   # world or payload; at the actual COM.
+
+wind_disturbance:
+  ros__parameters:
+    keyboard_enabled: true
+    enabled: false                       # Press W to start.
+    publish_rate_hz: 50.0
+    clock_timeout_s: 0.5
+    mean_velocity_world_mps: [2.0, 0.0, 0.0]
+    gust_amplitude_world_mps: [0.5, 0.2, 0.1]
+    gust_frequency_hz: [0.2, 0.2, 0.2]
+    turbulence_std_mps: [0.15, 0.15, 0.05]
+    turbulence_correlation_s: 1.0
+    ramp_time_s: 1.0
+    random_seed: 7

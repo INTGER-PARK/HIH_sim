@@ -1,0 +1,79 @@
+<mujoco model="contact_box">
+  <asset>
+    <material name="contact_box_plastic" rgba="0.76 0.82 0.78 1"
+              specular="0.15" shininess="0.20"/>
+    <material name="contact_box_stand_metal" rgba="0.24 0.29 0.34 1"
+              specular="0.20" shininess="0.30"/>
+  </asset>
+
+  <!-- Explicit frictionless support contact:
+       payload bottom ↔ wide pedestal top plate. -->
+  <contact>
+    <pair geom1="contact_box_collision"
+          geom2="contact_box_stand_top"
+          condim="1"
+          friction="0.0 0 0 0 0"/>
+  </contact>
+
+  <worldbody>
+    <!-- Fixed pedestal.  The narrow post ends at z=0.78 m and supports a
+         0.36 x 0.46 m top plate whose upper surface is z=0.80 m, exactly
+         level with the payload bottom.  The top is slightly smaller than the
+         0.40 x 0.50 m payload footprint so both +/-X faces remain accessible. -->
+    <body name="contact_box_stand" pos="0.85 0 0">
+      <geom name="contact_box_stand_base" type="cylinder"
+            pos="0 0 0.02" size="0.14 0.02"
+            material="contact_box_stand_metal" contype="1" conaffinity="3"/>
+      <geom name="contact_box_stand_post" type="box"
+            pos="0 0 0.41" size="0.04 0.04 0.37"
+            material="contact_box_stand_metal" contype="1" conaffinity="3"/>
+      <geom name="contact_box_stand_top" type="box"
+            pos="0 0 0.79" size="0.25 0.25 0.01"
+            material="contact_box_stand_metal" contype="5" conaffinity="3"
+            condim="1" friction="0.0 0 0" solref="0.01 1"/>
+    </body>
+
+    <!-- Outer dimensions (X,Y,Z): 0.40 x 0.50 x 0.50 m; total mass: 0.3 kg.
+         Inertia approximates a closed, uniform 1 mm hollow shell, normalized
+         to 0.30 kg. For each axis, subtract inner-box inertia from outer-box
+         inertia at common density: I = m*(Vo*So - Vi*Si)/(12*(Vo-Vi)),
+         where S is the sum of the other two squared side lengths.
+         Collision uses the closed outer envelope; there is no attachment
+         to the pedestal, actuator, or equality constraint. -->
+    <body name="contact_box" pos="0.85 0 1.05">
+      <freejoint name="contact_box_free"/>
+      <inertial pos="0 0 0" mass="0.3"
+                diaginertia="0.01668440 0.01286978 0.01668440"/>
+      <!-- Virtual 6-axis F/T sensor frames at the two drone-contact faces.
+           These sites define only the sensor origins/axes; they add no mass,
+           collision, or dynamics. cooperation_plant.py aggregates MuJoCo
+           solver contact forces at each face and publishes the 6D wrench.
+
+           Sensor +X is the INWARD payload normal on both faces, so positive
+           Fx means compressive load from either drone.
+             follower face (-X): sensor axes = payload axes
+             leader   face (+X): sensor axes = Rz(pi) * payload axes
+           Thus both sensor frames also match the nominal contacting drone body
+           axes in the aligned cooperative configuration. -->
+      <site name="contact_sensor_follower" type="sphere"
+            pos="-0.20 0 0" quat="1 0 0 0"
+            size="0.008" rgba="0.2 0.8 1 0" group="5"/>
+      <site name="contact_sensor_leader" type="sphere"
+            pos="0.20 0 0" quat="0 0 0 1"
+            size="0.008" rgba="1 0.4 0.2 0" group="5"/>
+
+      <!-- Collision filtering:
+           - bit 2 accepts only each drone's +X contact plate,
+           - bit 4 accepts support/floor surfaces,
+           - ordinary drone structure (bit 1 only) cannot contact the payload.
+           The Leader/Follower plate↔payload solver law is defined explicitly
+           in Cooperation.xml; its pair parameters override the geom-level
+           friction/solref/solimp below.  These geom values remain as fallback
+           parameters for other dynamically generated payload contacts. -->
+      <geom name="contact_box_collision" type="box" size="0.20 0.25 0.25"
+            material="contact_box_plastic" contype="0" conaffinity="6"
+            condim="3" friction="2.0 0.05 0.001" solref="0.02 1"
+            solimp="0.95 0.99 0.001" margin="0"/>
+    </body>
+  </worldbody>
+</mujoco>

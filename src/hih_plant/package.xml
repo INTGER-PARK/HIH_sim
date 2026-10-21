@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>hih_plant</name>
+  <version>0.0.0</version>
+  <description>Minitrone MuJoCo plant loader</description>
+  <maintainer email="jjungsoo2022@gmail.com">ryung</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>rcl_interfaces</depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <depend>std_msgs</depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>hih_interfaces</exec_depend>
+  <exec_depend>python3-pyqt5</exec_depend>
+  <exec_depend>python3-pyqtgraph</exec_depend>
+  <exec_depend>rosidl_runtime_py</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
