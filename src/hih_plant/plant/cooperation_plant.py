@@ -15,9 +15,9 @@ import rclpy
 from ament_index_python.packages import get_package_share_directory
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
-from hih_interfaces.msg import (ContactDiagnostics, CenterOfPressure,
-                                 Input, MinitroneState, MobObserverInput, Wrench)
-from plant.contact_geometry import MAX_CONTACTS, plate_support_cop_from_wrench
+from hih_interfaces.msg import (CenterOfPressure, Input, MinitroneState,
+                                 MobObserverInput, Wrench)
+from plant.contact_geometry import plate_support_cop_from_wrench
 from plant.high_fidelity import HighFidelityModel, PARAMETERS
 from plant.disturbance_bridge import SimulationDisturbances
 from plant.payload_telemetry import PayloadTelemetry
@@ -107,8 +107,6 @@ class Vehicle:
         # compression is Fn=max(0,-Fx).
         self.contact_wrench_pub = node.create_publisher(
             Wrench, self.frame + 'contact_wrench_real', 10)
-        self.contact_points_pub = node.create_publisher(
-            ContactDiagnostics, self.frame + 'contact_diagnostics', 10)
 
         # Payload-side 6D wrench sensor topic.  Unlike contact_wrench_real
         # (payload-on-drone, drone Body axes, plate-center moment), this is
@@ -170,12 +168,10 @@ class Vehicle:
         return rotation.T @ force, rotation.T @ moment
 
     def plate_payload_contact_sample(self):
-        """Read interface wrenches, solver CoP and RViz contact points once.
+        """Read interface wrenches and solver CoP from one contact traversal.
 
         All quantities are observations of the existing MuJoCo world. Moments
         are shifted to their published reference points; physics is not changed.
-        ContactDiagnostics keeps its existing ROS schema for HandinHand_rviz.
-        Unused friction/slip fields are NaN rather than synthetic measurements.
         """
         force_world, moment_world = np.zeros(3), np.zeros(3)
         sensor_force_world, sensor_moment_world = np.zeros(3), np.zeros(3)
@@ -188,37 +184,14 @@ class Vehicle:
         payload_rotation = np.asarray(self.data.geom_xmat[self.payload_geom]).reshape(3, 3)
         sensor_rotation = np.asarray(self.data.site_xmat[self.payload_sensor_site]).reshape(3, 3)
 
-        points = ContactDiagnostics()
-        points.step = int(round(float(self.data.time) * PHYSICS_HZ))
-        points.sim_time = float(self.data.time)
-        for field in ('contact_pos_x', 'contact_pos_y', 'contact_pos_z',
-                      'contact_dist', 'normal_relative_velocity', 'normal_force',
-                      'tangential_relative_speed', 'local_friction_utilization',
-                      'force_x', 'force_y', 'force_z'):
-            setattr(points, field, [math.nan] * MAX_CONTACTS)
-        points.efc_address = [-1] * MAX_CONTACTS
-        for field in ('global_friction_utilization', 'max_local_friction_utilization',
-                      'max_tangential_relative_speed', 'normal_force_weighted_tangential_speed',
-                      'normal_moment_y', 'normal_moment_y_capacity', 'normal_moment_y_utilization',
-                      'normal_moment_z', 'normal_moment_z_capacity', 'normal_moment_z_utilization'):
-            setattr(points, field, math.nan)
-        points.corner_face_gap = [math.nan] * 4
-        for field in ('relative_position', 'relative_rpy', 'relative_linear_velocity',
-                      'relative_angular_velocity'):
-            setattr(points, field, [math.nan] * 3)
-        distances = []
         for index in range(int(self.data.ncon)):
             contact = self.data.contact[index]
             geom1, geom2 = int(contact.geom1), int(contact.geom2)
             if {geom1, geom2} != {self.plate, self.payload_geom}:
                 continue
-            slot = points.contact_count
-            points.contact_count += 1
-            distances.append(float(contact.dist))
             active = int(contact.efc_address) >= 0
             wrench = np.zeros(6)
             if active:
-                points.active_constraint_count += 1
                 mujoco.mj_contactForce(self.model, self.data, index, wrench)
             frame = np.asarray(contact.frame).reshape(3, 3)
             sign = 1.0 if geom2 == self.plate else -1.0
@@ -231,30 +204,11 @@ class Vehicle:
             sensor_moment_world -= torque + np.cross(position - sensor_center, force)
             com_force_world -= force
             com_moment_world -= torque + np.cross(position - payload_com, force)
-            fn = max(0.0, float(wrench[0])) if active else 0.0
-            points.total_normal_force += fn
-            if slot < MAX_CONTACTS:
-                points.stored_contact_count += 1
-                local = rotation.T @ (position - plate_center)
-                local_force = rotation.T @ force
-                for axis, value in zip('xyz', local):
-                    getattr(points, 'contact_pos_' + axis)[slot] = float(value)
-                for axis, value in zip('xyz', local_force):
-                    getattr(points, 'force_' + axis)[slot] = float(value)
-                points.contact_dist[slot] = float(contact.dist)
-                points.normal_force[slot] = fn
-                points.efc_address[slot] = int(contact.efc_address)
-        points.contact_truncated = points.contact_count > MAX_CONTACTS
-        points.min_contact_dist = min(distances) if distances else math.nan
-        points.max_contact_dist = max(distances) if distances else math.nan
         force_body, moment_body = rotation.T @ force_world, rotation.T @ moment_world
-        points.net_force, points.net_moment = force_body.tolist(), moment_body.tolist()
         half_x, half_y, half_z = map(float, self.model.geom_size[self.plate])
         moment_face = moment_body - np.cross([half_x, 0.0, 0.0], force_body)
         support = plate_support_cop_from_wrench(
             force_body, moment_face, half_y, half_z, self.cop_solver_valid_threshold_n)
-        points.solver_cop_valid = support['valid']
-        points.solver_cop_y, points.solver_cop_z = support['y'], support['z']
         cop = None
         if self.enable_cop_solver:
             cop = CenterOfPressure()
@@ -264,7 +218,7 @@ class Vehicle:
         return (force_body, moment_body,
                 sensor_rotation.T @ sensor_force_world, sensor_rotation.T @ sensor_moment_world,
                 payload_rotation.T @ com_force_world, payload_rotation.T @ com_moment_world,
-                points, cop)
+                cop)
 
     def publish(self):
         t = float(self.data.time)
@@ -326,13 +280,11 @@ class Vehicle:
 
         # Interface telemetry and RViz overlays share one solver-contact sample.
         (contact_force, contact_moment, payload_sensor_force, payload_sensor_moment,
-         payload_com_force, payload_com_moment, contact_points,
-         solver_cop) = self.plate_payload_contact_sample()
+         payload_com_force, payload_com_moment, solver_cop) = self.plate_payload_contact_sample()
         contact_wrench = Wrench()
         contact_wrench.force = contact_force.astype(np.float32).tolist()
         contact_wrench.moment = contact_moment.astype(np.float32).tolist()
         self.contact_wrench_pub.publish(contact_wrench)
-        self.contact_points_pub.publish(contact_points)
 
         payload_wrench = Wrench()
         payload_wrench.force = payload_sensor_force.astype(np.float32).tolist()

@@ -4,10 +4,6 @@ import math
 import numpy as np
 
 
-# Fixed contact-array length in the RViz message interface.
-MAX_CONTACTS = 50
-
-
 def plate_support_cop_from_wrench(force, moment_face, half_y, half_z,
                                   threshold_n):
     """Return CoP using the full rectangular plate as the support region.

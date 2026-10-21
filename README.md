@@ -175,9 +175,8 @@ ros2 launch hih_rviz visualization.launch.py
 | `/{role}/minitrone/cmd`, `cmd_admittance` | 위치 reference와 admittance offset |
 | `/{role}/minitrone/cop_hat`, `cop_solver_real` | MoB 및 solver CoP |
 | `/{role}/minitrone/external_wrench_hat_second_order`, `contact_wrench_real` | 추정 wrench와 접촉 wrench |
-| `/{role}/minitrone/contact_diagnostics` | RViz 접촉점 위치·normal force·활성 constraint |
 | `/payload/contact_wrench_from_leader`, `contact_wrench_from_follower`, `contact_wrench_from_drones` | 화물 접촉 wrench |
 | `/hih/ground_truth/payload/odometry`, `acceleration`, `com` | 화물 상태와 실제 CoM |
 | `/hih/disturbance/payload/com_visualization_enabled` | CoM 표시 허용 heartbeat |
 
-`{role}`은 `leader` 또는 `follower`입니다. `ContactDiagnostics`의 메시지 형식은 RViz 호환을 위해 유지하며, 사용하지 않는 마찰·slip 진단 수치는 NaN으로 둡니다. 기체 가속도는 Body IMU specific force, payload acceleration은 World linear acceleration입니다. RViz의 기본 measured-state 모드를 사용하며, 기체 ground-truth 모드는 별도 기체 GT 발행기가 있어야 합니다.
+`{role}`은 `leader` 또는 `follower`입니다. 기체 가속도는 Body IMU specific force, payload acceleration은 World linear acceleration입니다. RViz의 기본 measured-state 모드를 사용하며, 기체 ground-truth 모드는 별도 기체 GT 발행기가 있어야 합니다.

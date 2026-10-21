@@ -80,7 +80,7 @@ def generate_launch_description():
             FindPackageShare('hih_plant'), 'config', 'disturbances.yaml'])),
         # CoP combinations: true/true=touch+solver, true/false=touch only,
         # false/true=solver only, false/false=both disabled.
-        # MoB CoP and RViz contact-point telemetry are independent of these switches.
+        # MoB CoP and contact-wrench telemetry are independent of these switches.
         DeclareLaunchArgument('cop_touch', default_value='true'),
         DeclareLaunchArgument('cop_solver', default_value='true'),
         DeclareLaunchArgument('record_data', default_value='true'),

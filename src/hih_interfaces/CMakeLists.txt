@@ -15,7 +15,6 @@ set(msg_files
   "msg/AttitudeCmd.msg"
   "msg/CenterOfPressure.msg"
   "msg/TorqueDob.msg"
-  "msg/ContactDiagnostics.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

@@ -58,7 +58,6 @@ COP_TYPE_NAME = "hih_interfaces/msg/CenterOfPressure"
 RAD_TO_DEG = 180.0 / math.pi
 MINITRONE_STATE_TYPE = "hih_interfaces/msg/MinitroneState"
 MOB_OBSERVER_INPUT_TYPE = "hih_interfaces/msg/MobObserverInput"
-CONTACT_DIAGNOSTICS_TYPE = "hih_interfaces/msg/ContactDiagnostics"
 INPUT_TYPE = "hih_interfaces/msg/Input"
 ATTITUDE_CMD_TYPE = "hih_interfaces/msg/AttitudeCmd"
 WRENCH_TYPE = "hih_interfaces/msg/Wrench"
@@ -90,12 +89,6 @@ def angular_plot_transform(
         if field_path.startswith("rpy["):
             return RAD_TO_DEG, "deg"
         if field_path.startswith("w_rpy["):
-            return RAD_TO_DEG, "deg/s"
-
-    if type_name == CONTACT_DIAGNOSTICS_TYPE:
-        if field_path.startswith("relative_rpy["):
-            return RAD_TO_DEG, "deg"
-        if field_path.startswith("relative_angular_velocity["):
             return RAD_TO_DEG, "deg/s"
 
     if type_name == INPUT_TYPE and field_path in {
