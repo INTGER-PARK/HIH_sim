@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>hih_logging</name>
+  <version>0.0.1</version>
+  <description>Cooperation rosbag recording and CSV export</description>
+  <maintainer email="jjungsoo2022@gmail.com">ryung</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>rosbag2_py</exec_depend>
+  <exec_depend>rosidl_runtime_py</exec_depend>
+  <exec_depend>hih_interfaces</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

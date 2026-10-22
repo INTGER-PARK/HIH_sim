@@ -1,0 +1,77 @@
+<mujoco model="HandinHand cooperation">
+  <!-- The source models own their geometry, actuators, sensors and contact
+       materials. This scene owns only their placement and the shared floor. -->
+  <compiler angle="radian"/>
+  <option timestep="0.0025" noslip_iterations="3"/>
+  <visual>
+    <scale com="0.03"/>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="45" elevation="35.264" ellipsoidinertia="false"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge"
+             rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8"
+             width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true"
+              texrepeat="5 5" reflectance="0.2" specular="0" shininess="0"/>
+    <model name="leader_model" file="Leader.xml"/>
+    <model name="follower_model" file="Follower.xml"/>
+    <model name="payload_model" file="contact_box.xml"/>
+  </asset>
+
+  <!-- Explicit cooperative contact laws.
+       These predefined pairs override the participating geom friction/solver
+       parameters for the intended plate↔payload interfaces, so Leader and
+       Follower use exactly the same contact law.  Other drone geometry is NOT
+       listed here and remains blocked from the payload by contype/conaffinity. -->
+  <contact>
+    <pair name="leader_payload_plate"
+          geom1="leader_contact_plate_px"
+          geom2="payload_contact_box_collision"
+          condim="3"
+          friction="2.0 2.0 0.05 0.001 0.001"
+          solref="0.01 1"
+          solimp="0.99 0.999 0.001 0.5 2"
+          margin="0"/>
+    <pair name="follower_payload_plate"
+          geom1="follower_contact_plate_px"
+          geom2="payload_contact_box_collision"
+          condim="3"
+          friction="2.0 2.0 0.05 0.001 0.001"
+          solref="0.01 1"
+          solimp="0.99 0.999 0.001 0.5 2"
+          margin="0"/>
+  </contact>
+
+  <worldbody>
+    <light pos="0 0 10" dir="0 0 -1" directional="true"
+           diffuse="0.225 0.24 0.275" specular="0.04 0.04 0.05"/>
+    <geom name="floor" type="plane" size="0 0 0.05" material="groundplane"
+          contype="5" conaffinity="1"/>
+    <!-- Free viewer camera; this named camera is optional. -->
+    <camera name="cooperation_front" pos="0 -3.5 2.2"
+            xyaxes="1 0 0 0 0.325 0.946"/>
+
+    <!-- Each source drone_base is at local z=0.185. Frame z=0.865 puts
+         both body centers at the payload center height of 1.05 m.
+         Plate center radius is 0.215 m; the surface gap is
+         0.62 - 0.215 - the box half-width in contact_box.xml.
+         The leader faces -X; the follower faces +X. -->
+    <frame pos="0.62 0 0.865" quat="0 0 0 1">
+      <attach model="leader_model" body="drone_base" prefix="leader_"/>
+    </frame>
+    <frame pos="-0.62 0 0.865">
+      <attach model="follower_model" body="drone_base" prefix="follower_"/>
+    </frame>
+
+    <!-- The source pedestal and free box are centered together by shifting
+         their common source X offset 0.85 m to the scene origin. The box
+         touches the stand by contact only; no controller receives its state. -->
+    <frame pos="-0.85 0 0">
+      <attach model="payload_model" prefix="payload_"/>
+    </frame>
+  </worldbody>
+</mujoco>

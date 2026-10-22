@@ -1,0 +1,14 @@
+cooperation_plant:
+  ros__parameters:
+    # The remaining per-feature values use the validated defaults in
+    # high_fidelity.py. The cooperative launch loads this file at startup.
+    random_seed: 1
+    enable_high_fidelity: true
+    enable_motor_dynamics: true
+    enable_servo_dynamics: true
+    enable_motor_mismatch: true
+    enable_thrust_saturation: false
+    enable_sensor_model: true
+    enable_inertial_uncertainty: true
+    enable_contact_uncertainty: false
+    enable_residual_wrench: true
